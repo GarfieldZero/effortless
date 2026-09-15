@@ -1,12 +1,14 @@
 pluginManagement {
     repositories {
-        maven {
-            name = 'AliyunGradlePlugin'
-            url = uri('https://maven.aliyun.com/repository/gradle-plugin')
-        }
-        maven {
-            name = 'AliyunPublic'
-            url = uri('https://maven.aliyun.com/repository/public')
+        if (System.getenv('CI') == null) {
+            maven {
+                name = 'AliyunGradlePlugin'
+                url = uri('https://maven.aliyun.com/repository/gradle-plugin')
+            }
+            maven {
+                name = 'AliyunPublic'
+                url = uri('https://maven.aliyun.com/repository/public')
+            }
         }
         mavenCentral()
         gradlePluginPortal()

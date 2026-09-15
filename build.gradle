@@ -9,16 +9,18 @@ plugins {
 
 apply from: 'patch.gradle'
 
-allprojects {
-    repositories.configureEach { repository ->
-        if (repository instanceof MavenArtifactRepository) {
-            def repositoryUrl = repository.url.toString()
-            if (repositoryUrl.contains('libraries.minecraft.net')) {
-                repository.url = uri('https://bmclapi2.bangbang93.com/maven/')
-            } else if (repositoryUrl.contains('repo.maven.apache.org/maven2')) {
-                repository.url = uri('https://maven.aliyun.com/repository/public')
-            } else if (repositoryUrl.contains('repo1.maven.org/maven2')) {
-                repository.url = uri('https://maven.aliyun.com/repository/public')
+if (System.getenv('CI') == null) {
+    allprojects {
+        repositories.configureEach { repository ->
+            if (repository instanceof MavenArtifactRepository) {
+                def repositoryUrl = repository.url.toString()
+                if (repositoryUrl.contains('libraries.minecraft.net')) {
+                    repository.url = uri('https://bmclapi2.bangbang93.com/maven/')
+                } else if (repositoryUrl.contains('repo.maven.apache.org/maven2')) {
+                    repository.url = uri('https://maven.aliyun.com/repository/public')
+                } else if (repositoryUrl.contains('repo1.maven.org/maven2')) {
+                    repository.url = uri('https://maven.aliyun.com/repository/public')
+                }
             }
         }
     }

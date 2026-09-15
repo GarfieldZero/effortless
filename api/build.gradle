@@ -3,9 +3,11 @@ plugins {
 }
 
 repositories {
-    maven {
-        name = 'AliyunPublic'
-        url = 'https://maven.aliyun.com/repository/public'
+    if (System.getenv('CI') == null) {
+        maven {
+            name = 'AliyunPublic'
+            url = 'https://maven.aliyun.com/repository/public'
+        }
     }
     mavenCentral()
 }
