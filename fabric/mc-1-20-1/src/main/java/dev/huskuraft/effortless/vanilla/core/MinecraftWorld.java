@@ -1,6 +1,8 @@
 package dev.huskuraft.effortless.vanilla.core;
 
+import java.util.Collection;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import dev.huskuraft.effortless.api.core.BlockEntity;
 import dev.huskuraft.effortless.api.core.BlockPosition;
@@ -11,7 +13,11 @@ import dev.huskuraft.effortless.api.core.Player;
 import dev.huskuraft.effortless.api.core.ResourceKey;
 import dev.huskuraft.effortless.api.core.World;
 import dev.huskuraft.effortless.api.core.WorldBorder;
+import dev.huskuraft.effortless.api.math.Vector3d;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public record MinecraftWorld(Level refs) implements World {
 
@@ -68,5 +74,37 @@ public record MinecraftWorld(Level refs) implements World {
     @Override
     public boolean removeBlock(BlockPosition blockPosition, boolean moving) {
         return refs.removeBlock(MinecraftConvertor.toPlatformBlockPosition(blockPosition), moving);
+    }
+
+    @Override
+    public void gatherItemDrops(Collection<BlockPosition> blockPositions, Vector3d destination) {
+        if (refs.isClientSide() || blockPositions.isEmpty()) {
+            return;
+        }
+
+        var minX = Double.POSITIVE_INFINITY;
+        var minY = Double.POSITIVE_INFINITY;
+        var minZ = Double.POSITIVE_INFINITY;
+        var maxX = Double.NEGATIVE_INFINITY;
+        var maxY = Double.NEGATIVE_INFINITY;
+        var maxZ = Double.NEGATIVE_INFINITY;
+        for (var blockPosition : blockPositions) {
+            minX = Math.min(minX, blockPosition.x());
+            minY = Math.min(minY, blockPosition.y());
+            minZ = Math.min(minZ, blockPosition.z());
+            maxX = Math.max(maxX, blockPosition.x());
+            maxY = Math.max(maxY, blockPosition.y());
+            maxZ = Math.max(maxZ, blockPosition.z());
+        }
+
+        var positions = blockPositions.stream().map(MinecraftConvertor::toPlatformBlockPosition).collect(Collectors.toSet());
+        var searchBox = new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1).inflate(1.0);
+        for (var itemEntity : refs.getEntitiesOfClass(ItemEntity.class, searchBox)) {
+            if (!positions.contains(itemEntity.blockPosition())) {
+                continue;
+            }
+            itemEntity.setPos(destination.x(), destination.y(), destination.z());
+            itemEntity.setDeltaMovement(Vec3.ZERO);
+        }
     }
 }

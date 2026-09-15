@@ -6,6 +6,13 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'org.spongepowered.gradle.vanilla'
 
+    repositories {
+        maven {
+            name = 'BMCLAPI'
+            url = 'https://bmclapi2.bangbang93.com/maven/'
+        }
+    }
+
     group = "${mod_group_id}.plugin.${plugin_id}"
     version = "${mod_version}-${plugin_version}"
 

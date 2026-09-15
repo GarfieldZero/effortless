@@ -1,7 +1,9 @@
 package dev.huskuraft.effortless.api.core;
 
+import java.util.Collection;
 import java.util.UUID;
 
+import dev.huskuraft.effortless.api.math.Vector3d;
 import dev.huskuraft.effortless.api.platform.PlatformReference;
 
 public interface World extends PlatformReference {
@@ -43,5 +45,7 @@ public interface World extends PlatformReference {
     }
 
     WorldBorder getWorldBorder();
+
+    void gatherItemDrops(Collection<BlockPosition> blockPositions, Vector3d destination);
 
 }

@@ -6,36 +6,7 @@ on:
       - "v*"
 
 jobs:
-  gradle-publish:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-
-      - name: Setup JDKs
-        uses: actions/setup-java@v4
-        with:
-          java-version: |
-            16
-            17
-            21
-          distribution: 'zulu'
-          cache: 'gradle'
-
-      - name: Build with Gradle
-        uses: gradle/actions/setup-gradle@v3
-        env:
-          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-          EFFORTLESS_PORT_TYPE: active
-        with:
-          arguments: modrinth
-
   github-release:
-    needs: gradle-publish
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -44,7 +15,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: recursive
 
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build fused Fabric and Forge JAR
+        run: ./gradlew :multiplatform:mc-1-20-1:fuseJar --console=plain
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: multiplatform/mc-1-20-1/build/libs/*.jar
+          generate_release_notes: true

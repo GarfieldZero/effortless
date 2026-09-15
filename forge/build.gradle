@@ -1,5 +1,5 @@
 plugins {
-    id 'net.minecraftforge.gradle' version "[${forge_gradle_version},6.2)" apply false
+    id 'net.minecraftforge.gradle' version "${forge_gradle_version}" apply false
 }
 
 subprojects {

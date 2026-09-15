@@ -10,6 +10,7 @@ public enum EffortlessKeys implements KeyBindingOwner {
 
     BUILD_MODE_RADIAL("build_mode_radial", Category.DEFAULT, KeyCodes.KEY_LEFT_ALT),
     PASSIVE_BUILD_MODIFIER("passive_build_modifier", Category.DEFAULT, KeyCodes.KEY_UNKNOWN),
+    TEMPORARY_BUILD_DISABLE("temporary_build_disable", Category.DEFAULT, KeyCodes.KEY_LEFT_CONTROL),
 
     UNDO("undo", Category.DEFAULT, KeyCodes.KEY_LEFT_BRACKET),
     REDO("redo", Category.DEFAULT, KeyCodes.KEY_RIGHT_BRACKET),

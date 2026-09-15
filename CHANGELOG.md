@@ -1,6 +1,17 @@
 ## Changelog
 ----------
 
+### 3.4.0-survival.1
+
+* Create an unofficial survival-focused fork from upstream v3.4.0.
+* Gather broken-block drops at the nearest broken block by default.
+* Add a configurable hold-to-disable building key binding.
+* Prefer the selected hotbar tool when choosing a mining tool.
+* Keep proper-tool checks enabled and reserve one point of tool durability by
+  default.
+
+----------
+
 ### 3.4.0
 
 * Add support for OpenPAC ([#202](https://github.com/huskcasaca/effortless/pull/202))

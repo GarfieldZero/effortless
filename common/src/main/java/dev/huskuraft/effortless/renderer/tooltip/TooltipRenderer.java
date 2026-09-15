@@ -57,10 +57,15 @@ public class TooltipRenderer {
                 if (!list.isEmpty() && list.get(0) instanceof ItemStack) {
                     return new ItemsEntry((Collection<ItemStack>) list, color);
                 }
+            } else if (object instanceof TitledItems titledItems) {
+                return new TitledItemsEntry(titledItems.header(), titledItems.items(), titledItems.color());
             }
             return null;
         }).filter(Objects::nonNull).toList();
         showEntry(id, priority, new GroupEntry(entries), immediate);
+    }
+
+    public record TitledItems(Text header, Collection<ItemStack> items, Integer color) {
     }
 
     public void showEntry(Object id, int priority, Entry entry, boolean immediate) {
@@ -294,7 +299,11 @@ public class TooltipRenderer {
         private final Text header;
 
         public TitledItemsEntry(Text header, Collection<ItemStack> items) {
-            super(items);
+            this(header, items, null);
+        }
+
+        public TitledItemsEntry(Text header, Collection<ItemStack> items, Integer color) {
+            super(items, color);
             this.header = header;
         }
 

@@ -26,6 +26,9 @@ public class EffortlessBuilderSettingsScreen extends AbstractPanelScreen {
         super(entrance, Text.translate("effortless.builder_settings.title"), PANEL_WIDTH_60, PANEL_HEIGHT_FULL);
         this.consumer = newConfig -> {
             getEntrance().getConfigStorage().update(config -> newConfig);
+            getEntrance().getStructureBuilder().getAllContexts().replaceAll(
+                    (uuid, context) -> context.withBuilderConfig(newConfig.builderConfig())
+            );
         };
 
         this.config = getEntrance().getConfigStorage().get();
@@ -59,10 +62,16 @@ public class EffortlessBuilderSettingsScreen extends AbstractPanelScreen {
 
 
         entries.addIntegerEntry(Text.translate("effortless.builder_settings.reserved_tool_durability"), null, this.config.builderConfig().reservedToolDurability(), BuilderConfig.RESERVED_TOOL_DURABILITY_RANGE.min(), BuilderConfig.RESERVED_TOOL_DURABILITY_RANGE.max(), (value) -> {
-            this.config = this.config.withBuilderConfig(new BuilderConfig(value, this.config.builderConfig().passiveMode()));
+            this.config = this.config.withBuilderConfig(this.config.builderConfig().withReservedToolDurability(value));
+        });
+        entries.addSwitchEntry(Text.translate("effortless.builder_settings.prefer_tool_in_hand"), null, this.config.builderConfig().preferToolInHand(), (value) -> {
+            this.config = this.config.withBuilderConfig(this.config.builderConfig().withPreferToolInHand(value));
         });
         entries.addSwitchEntry(Text.translate("effortless.builder_settings.passive_mode"), null, this.config.builderConfig().passiveMode(), (value) -> {
-            this.config = this.config.withBuilderConfig(new BuilderConfig(config.builderConfig().reservedToolDurability(), value));
+            this.config = this.config.withBuilderConfig(this.config.builderConfig().withPassiveMode(value));
+        });
+        entries.addSwitchEntry(Text.translate("effortless.builder_settings.gather_drops"), null, this.config.builderConfig().gatherDrops(), (value) -> {
+            this.config = this.config.withBuilderConfig(this.config.builderConfig().withGatherDrops(value));
         });
 
         entries.addTab(Text.translate("effortless.pattern_settings.item_randomizer_presets"), null, config.patternConfig().transformerPreset(), (value) -> {

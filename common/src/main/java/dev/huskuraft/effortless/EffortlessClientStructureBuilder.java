@@ -63,6 +63,7 @@ import dev.huskuraft.effortless.networking.packets.player.PlayerBuildPacket;
 import dev.huskuraft.effortless.networking.packets.player.PlayerCommandPacket;
 import dev.huskuraft.effortless.renderer.opertaion.children.BlockOperationRenderer;
 import dev.huskuraft.effortless.renderer.outliner.OutlineRenderLayers;
+import dev.huskuraft.effortless.renderer.tooltip.TooltipRenderer;
 import dev.huskuraft.effortless.screen.wheel.AbstractWheelScreen;
 import dev.huskuraft.effortless.session.config.ConstraintConfig;
 import dev.huskuraft.effortless.session.config.SessionConfig;
@@ -75,6 +76,7 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
     private final Map<UUID, Context> historyContexts = new HashMap<>();
     private final Map<UUID, OperationResultStack> undoRedoStacks = new HashMap<>();
     private final AtomicReference<ResourceLocation> lastClientPlayerLevel = new AtomicReference<>();
+    private boolean temporaryInteractionBypassActive = false;
 
     public EffortlessClientStructureBuilder(EffortlessClient entrance) {
         this.entrance = entrance;
@@ -336,10 +338,14 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
         lastClientPlayerLevel.set(null);
         contexts.clear();
         undoRedoStacks.clear();
-        getEntrance().getConfigStorage().update(config -> new ClientConfig(config.renderConfig(), config.patternConfig(), config.clipboardConfig()));
+        getEntrance().getConfigStorage().update(config -> new ClientConfig(config.builderConfig(), config.renderConfig(), config.patternConfig(), config.clipboardConfig(), config.structureMap()));
     }
 
     public EventResult onPlayerInteract(Player player, InteractionType type, InteractionHand hand) {
+        if (isTemporaryInteractionBypassActive()) {
+            return EventResult.pass();
+        }
+
         if (getEntrance().getConfigStorage().get().builderConfig().passiveMode())
             if (!EffortlessKeys.PASSIVE_BUILD_MODIFIER.getKeyBinding().isDown() && !getContext(player).isBuilding()) {
                 return EventResult.pass();
@@ -565,6 +571,15 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
             return;
         }
 
+        if (isTemporaryInteractionBypassActive()) {
+            if (!temporaryInteractionBypassActive) {
+                temporaryInteractionBypassActive = true;
+                hideContextPreview(player);
+            }
+            return;
+        }
+        temporaryInteractionBypassActive = false;
+
         if (getEntrance().getConfigStorage().get().builderConfig().passiveMode() && !EffortlessKeys.PASSIVE_BUILD_MODIFIER.getKeyBinding().isDown() && !getContext(player).isBuilding()) {
             getEntrance().getClientManager().getTooltipRenderer().hideEntry(generateId(player.getId(), Context.class), 0, false);
             return;
@@ -600,6 +615,22 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
         }
 
         getEntrance().getChannel().sendPacket(new PlayerBuildPacket(getPlayer().getId(), context));
+    }
+
+    private boolean isTemporaryInteractionBypassActive() {
+        return EffortlessKeys.TEMPORARY_BUILD_DISABLE.getKeyBinding().isDown();
+    }
+
+    private void hideContextPreview(Player player) {
+        var uuid = player.getId();
+        getEntrance().getClientManager().getPatternRenderer().remove(uuid);
+        getEntrance().getClientManager().getOperationsRenderer().remove(uuid);
+        getEntrance().getClientManager().getOutlineRenderer().remove(generateId(uuid, BoundingBox3d.class));
+        for (var allColor : BlockOperationRenderer.getAllColors()) {
+            getEntrance().getClientManager().getOutlineRenderer().remove(generateId(uuid, allColor));
+        }
+        getEntrance().getClientManager().getTooltipRenderer().hideEntry(generateId(uuid, Context.class), 0, true);
+        clearBuildMessage(player);
     }
 
     private void reloadContext(Player player) {
@@ -688,63 +719,62 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
             return;
         }
         var entries = new ArrayList<>();
+        var preview = context.isPreviewType();
 
         var blockStateSummary = tooltip.itemSummary();
-        if (!blockStateSummary.isEmpty()) {
-            var allProducts = new ArrayList<ItemStack>();
-            for (var summary : ItemSummary.values()) {
-                var items = blockStateSummary.getOrDefault(summary, List.of());
-                if (items.isEmpty()) {
-                    continue;
-                }
-                var color = switch (summary) {
-                    case BLOCKS_PLACED -> ChatFormatting.WHITE;
-                    case BLOCKS_DESTROYED -> ChatFormatting.RED;
-                    case BLOCKS_INTERACTED -> ChatFormatting.YELLOW;
-                    case BLOCKS_COPIED -> ChatFormatting.GREEN;
-                    case BLOCKS_NOT_REPLACEABLE -> ChatFormatting.GRAY;
-                    case BLOCKS_NOT_BREAKABLE -> ChatFormatting.GRAY;
-                    case BLOCKS_NOT_INTERACTABLE -> ChatFormatting.GRAY;
-                    case BLOCKS_NOT_COPYABLE -> ChatFormatting.GRAY;
-                    case BLOCKS_ITEMS_INSUFFICIENT -> ChatFormatting.RED;
-                    case BLOCKS_TOOLS_INSUFFICIENT -> ChatFormatting.GRAY;
-                    case BLOCKS_BLACKLISTED -> ChatFormatting.GRAY;
-                    case BLOCKS_NO_PERMISSION -> ChatFormatting.GRAY;
-
-                    case CONTAINER_CONSUMED -> ChatFormatting.WHITE;
-                    case CONTAINER_DROPPED -> ChatFormatting.WHITE;
-                };
-                entries.add(new Tuple2<>(items, color.getColor()));
-                entries.add(Text.translate("effortless.build.summary." + summary.name().toLowerCase(Locale.ROOT)).withStyle(color));
-                allProducts.addAll(items);
+        for (var summary : ItemSummary.values()) {
+            var items = blockStateSummary.getOrDefault(summary, List.of());
+            if (items.isEmpty() || (preview && !isPreviewProblem(summary))) {
+                continue;
             }
-            if (allProducts.isEmpty()) {
-                entries.add(Text.translate("effortless.build.summary.no_item_summary").withStyle(ChatFormatting.GRAY));
-            }
-        } else {
-            entries.add(Text.translate("effortless.build.summary.pending_item_summary").withStyle(ChatFormatting.GRAY));
+            var color = getSummaryColor(summary);
+            entries.add(new TooltipRenderer.TitledItems(
+                    Text.translate("effortless.build.summary." + summary.name().toLowerCase(Locale.ROOT)).withStyle(color),
+                    items,
+                    color.getColor()
+            ));
         }
 
-
-        var texts = new ArrayList<Tuple2<Text, Text>>();
-        texts.add(new Tuple2<>(Text.translate("effortless.build.summary.structure").withStyle(ChatFormatting.WHITE), context.buildMode().getDisplayName().withStyle(ChatFormatting.GOLD)));
-        texts.add(new Tuple2<>(AbstractWheelScreen.button(context.replaceStrategy()).getCategory().withStyle(ChatFormatting.WHITE), AbstractWheelScreen.button(context.replaceStrategy()).getName().withStyle(ChatFormatting.GOLD)));
-
-        for (var supportedFeature : context.structure().getSupportedFeatures()) {
-            var option = context.buildFeatures().stream().filter(feature -> Objects.equals(feature.getCategory(), supportedFeature.getName())).findFirst();
-            if (option.isEmpty()) continue;
-            var button = AbstractWheelScreen.button(option.get());
-            texts.add(new Tuple2<>(button.getCategory().withStyle(ChatFormatting.WHITE), button.getName().withStyle(ChatFormatting.GOLD)));
-        }
-        if (context.pattern().enabled()) {
-            texts.add(new Tuple2<>(Text.translate("effortless.build.summary.pattern").withStyle(ChatFormatting.WHITE), (context.pattern().enabled() ? Text.translate("effortless.build.summary.pattern_enabled") : Text.translate("effortless.build.summary.pattern_disabled")).withStyle(ChatFormatting.GOLD)));
+        if (entries.isEmpty()) {
+            getEntrance().getClientManager().getTooltipRenderer().hideEntry(generateId(id, Context.class), priority, false);
+            return;
         }
 
-        entries.add(texts);
-
-        entries.add(context.buildMode().getIcon());
         getEntrance().getClientManager().getTooltipRenderer().showGroupEntry(generateId(id, Context.class), priority, entries, context.isBuildType());
 
+    }
+
+    private boolean isPreviewProblem(ItemSummary summary) {
+        return switch (summary) {
+            case BLOCKS_NOT_REPLACEABLE,
+                 BLOCKS_NOT_BREAKABLE,
+                 BLOCKS_NOT_INTERACTABLE,
+                 BLOCKS_NOT_COPYABLE,
+                 BLOCKS_ITEMS_INSUFFICIENT,
+                 BLOCKS_TOOLS_INSUFFICIENT,
+                 BLOCKS_BLACKLISTED,
+                 BLOCKS_NO_PERMISSION -> true;
+            default -> false;
+        };
+    }
+
+    private ChatFormatting getSummaryColor(ItemSummary summary) {
+        return switch (summary) {
+            case BLOCKS_PLACED -> ChatFormatting.WHITE;
+            case BLOCKS_DESTROYED -> ChatFormatting.RED;
+            case BLOCKS_INTERACTED -> ChatFormatting.YELLOW;
+            case BLOCKS_COPIED -> ChatFormatting.GREEN;
+            case BLOCKS_NOT_REPLACEABLE,
+                 BLOCKS_NOT_BREAKABLE,
+                 BLOCKS_NOT_INTERACTABLE,
+                 BLOCKS_NOT_COPYABLE,
+                 BLOCKS_TOOLS_INSUFFICIENT,
+                 BLOCKS_BLACKLISTED,
+                 BLOCKS_NO_PERMISSION -> ChatFormatting.GRAY;
+            case BLOCKS_ITEMS_INSUFFICIENT -> ChatFormatting.RED;
+            case CONTAINER_CONSUMED,
+                 CONTAINER_DROPPED -> ChatFormatting.WHITE;
+        };
     }
 
     private boolean isBuildMessageVisible = false;

@@ -3,6 +3,10 @@ plugins {
 }
 
 repositories {
+    maven {
+        name = 'AliyunPublic'
+        url = 'https://maven.aliyun.com/repository/public'
+    }
     mavenCentral()
 }
 

@@ -319,6 +319,10 @@ public final class EffortlessClientManager implements ClientManager {
 
     public EventResult onInteractionInput(InteractionType type, InteractionHand hand) {
 
+        if (EffortlessKeys.TEMPORARY_BUILD_DISABLE.getKeyBinding().isDown()) {
+            return EventResult.pass();
+        }
+
         if (getEntrance().getStructureBuilder().getContext(getRunningClient().getPlayer()).isDisabled()) {
             return EventResult.pass();
         }

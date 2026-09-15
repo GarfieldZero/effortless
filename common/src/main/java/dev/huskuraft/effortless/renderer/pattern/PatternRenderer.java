@@ -42,6 +42,10 @@ public class PatternRenderer {
         entries.put(uuid, new RenderFadeEntry<>(context));
     }
 
+    public void remove(UUID uuid) {
+        entries.remove(uuid);
+    }
+
     public void render(Renderer renderer, float deltaTick) {
         entries.forEach((k, v) -> {
             if (!v.getValue().pattern().enabled()) return;

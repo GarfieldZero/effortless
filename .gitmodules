@@ -1,4 +1,4 @@
 [submodule "fuse-gradle-plugin"]
 	path = fuse-gradle-plugin
-	url = git@github.com:huskcasaca/fuse.git
+	url = https://github.com/GarfieldZero/fuse-gradle-plugin.git
 	branch = master

@@ -29,7 +29,7 @@ modrinth {
 }
 
 static def extractChangelog(File changelogFile, String modVersion) {
-    def text = Files.readString(changelogFile.toPath())
+    def text = Files.readString(changelogFile.toPath()).replace('\r\n', '\n')
     def split = text.split('----------\n\n')
     for (final def log in split) {
         if (log.startsWith("### $modVersion")) {

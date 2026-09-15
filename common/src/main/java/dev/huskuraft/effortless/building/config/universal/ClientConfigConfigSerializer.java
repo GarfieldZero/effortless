@@ -8,6 +8,7 @@ import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.ConfigSpec;
 
 import dev.huskuraft.effortless.api.config.ConfigSerializer;
+import dev.huskuraft.effortless.building.config.BuilderConfig;
 import dev.huskuraft.effortless.building.config.ClientConfig;
 import dev.huskuraft.effortless.building.config.ClipboardConfig;
 import dev.huskuraft.effortless.building.config.PatternConfig;
@@ -28,6 +29,9 @@ public class ClientConfigConfigSerializer implements ConfigSerializer<ClientConf
     private static final String KEY_COLLECTIONS = "collections";
 
     private static final String KEY_RESERVED_TOOL_DURABILITY = "reservedToolDurability";
+    private static final String KEY_PASSIVE_MODE = "passiveMode";
+    private static final String KEY_GATHER_DROPS = "gatherDrops";
+    private static final String KEY_PREFER_TOOL_IN_HAND = "preferToolInHand";
 
 
     @Override
@@ -43,6 +47,9 @@ public class ClientConfigConfigSerializer implements ConfigSerializer<ClientConf
         spec.defineList(List.of(KEY_CLIPBOARD, KEY_COLLECTIONS), () -> getDefault().clipboardConfig().collections().stream().map(SnapshotConfigSerializer.INSTANCE::serialize).toList(), Config.class::isInstance);
 //        spec.define(KEY_PASSIVE_MODE, () -> getDefault().passiveMode(), Boolean.class::isInstance);
         spec.defineInRange(List.of(KEY_BUILDER, KEY_RESERVED_TOOL_DURABILITY), getDefault().builderConfig().reservedToolDurability(), 0, 32);
+        spec.define(List.of(KEY_BUILDER, KEY_PASSIVE_MODE), () -> getDefault().builderConfig().passiveMode(), Boolean.class::isInstance);
+        spec.define(List.of(KEY_BUILDER, KEY_GATHER_DROPS), () -> getDefault().builderConfig().gatherDrops(), Boolean.class::isInstance);
+        spec.define(List.of(KEY_BUILDER, KEY_PREFER_TOOL_IN_HAND), () -> getDefault().builderConfig().preferToolInHand(), Boolean.class::isInstance);
 
         return spec;
     }
@@ -51,6 +58,12 @@ public class ClientConfigConfigSerializer implements ConfigSerializer<ClientConf
     public ClientConfig deserialize(Config config) {
         validate(config);
         return new ClientConfig(
+                new BuilderConfig(
+                        config.get(List.of(KEY_BUILDER, KEY_RESERVED_TOOL_DURABILITY)),
+                        config.get(List.of(KEY_BUILDER, KEY_PASSIVE_MODE)),
+                        config.get(List.of(KEY_BUILDER, KEY_GATHER_DROPS)),
+                        config.get(List.of(KEY_BUILDER, KEY_PREFER_TOOL_IN_HAND))
+                ),
                 new RenderConfig(
                         config.get(List.of(KEY_RENDER, KEY_SHOW_BLOCK_PREVIEW)),
                         config.get(List.of(KEY_RENDER, KEY_SHOW_OTHER_PLAYERS_BUILD)),
@@ -65,7 +78,8 @@ public class ClientConfigConfigSerializer implements ConfigSerializer<ClientConf
                 new ClipboardConfig(
                         config.<List<Config>>get(List.of(KEY_CLIPBOARD, KEY_COLLECTIONS)).stream().map(SnapshotConfigSerializer.INSTANCE::deserialize).toList(),
                         List.of()
-                )
+                ),
+                getDefault().structureMap()
         );
     }
 
@@ -78,6 +92,10 @@ public class ClientConfigConfigSerializer implements ConfigSerializer<ClientConf
         config.set(List.of(KEY_RENDER, KEY_MAX_RENDER_VOLUME), settings.renderConfig().maxRenderVolume());
         config.set(List.of(KEY_PATTERN, KEY_TRANSFORMER_PRESETS), settings.patternConfig().itemRandomizers().stream().map(TransformerConfigSerializer.INSTANCE::serialize).filter(Objects::nonNull).toList());
         config.set(List.of(KEY_CLIPBOARD, KEY_COLLECTIONS), settings.clipboardConfig().collections().stream().map(SnapshotConfigSerializer.INSTANCE::serialize).filter(Objects::nonNull).toList());
+        config.set(List.of(KEY_BUILDER, KEY_RESERVED_TOOL_DURABILITY), settings.builderConfig().reservedToolDurability());
+        config.set(List.of(KEY_BUILDER, KEY_PASSIVE_MODE), settings.builderConfig().passiveMode());
+        config.set(List.of(KEY_BUILDER, KEY_GATHER_DROPS), settings.builderConfig().gatherDrops());
+        config.set(List.of(KEY_BUILDER, KEY_PREFER_TOOL_IN_HAND), settings.builderConfig().preferToolInHand());
         validate(config);
         return config;
     }

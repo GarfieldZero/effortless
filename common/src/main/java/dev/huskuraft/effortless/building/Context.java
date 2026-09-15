@@ -55,6 +55,14 @@ public record Context(
         return configs().builderConfig().reservedToolDurability();
     }
 
+    public boolean gatherDrops() {
+        return configs().builderConfig().gatherDrops();
+    }
+
+    public boolean preferToolInHand() {
+        return configs().builderConfig().preferToolInHand();
+    }
+
     public boolean useLegacyBlockPlace() {
         return false;
     }

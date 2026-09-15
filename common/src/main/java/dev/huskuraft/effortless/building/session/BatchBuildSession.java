@@ -1,5 +1,6 @@
 package dev.huskuraft.effortless.building.session;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import dev.huskuraft.effortless.building.operation.block.BlockOperation;
 import dev.huskuraft.effortless.building.operation.block.BlockStateCopyOperation;
 import dev.huskuraft.effortless.building.operation.block.BlockStateCopyOperationResult;
 import dev.huskuraft.effortless.building.operation.block.BlockStateUpdateOperation;
+import dev.huskuraft.effortless.building.operation.block.BlockStateUpdateOperationResult;
 import dev.huskuraft.effortless.building.pattern.randomize.ItemRandomizer;
 import dev.huskuraft.effortless.networking.packets.player.PlayerSnapshotCapturePacket;
 
@@ -132,8 +134,37 @@ public class BatchBuildSession implements Session {
         if (lastResult == null) {
             lastResult = create(world, player, context).commit();
             saveClipboard();
+            gatherDrops(lastResult);
         }
         return lastResult;
+    }
+
+    private void gatherDrops(BatchOperationResult result) {
+        if (world.isClient() || !context.isBuildType() || !context.gatherDrops()) {
+            return;
+        }
+
+        var destroyedBlocks = result.getResults().stream()
+                .filter(BlockStateUpdateOperationResult.class::isInstance)
+                .map(BlockStateUpdateOperationResult.class::cast)
+                .filter(blockResult -> blockResult.result().success())
+                .filter(blockResult -> blockResult.getBlockStateToBreak() != null && !blockResult.getBlockStateToBreak().isAir())
+                .toList();
+        if (destroyedBlocks.isEmpty()) {
+            return;
+        }
+
+        var nearestBlock = destroyedBlocks.stream()
+                .min(Comparator.comparingDouble(blockResult -> blockResult.getOperation().getBlockPosition().getCenter().distance(player.getPosition())))
+                .orElseThrow();
+        var blockPositions = destroyedBlocks.stream()
+                .map(blockResult -> blockResult.getOperation().getBlockPosition())
+                .collect(Collectors.toSet());
+        var placedState = nearestBlock.getBlockStatePlaced();
+        var destination = placedState != null && !placedState.isAir()
+                ? nearestBlock.getOperation().getBlockPosition().above().getCenter()
+                : nearestBlock.getOperation().getBlockPosition().getCenter();
+        world.gatherItemDrops(blockPositions, destination);
     }
 
     protected void saveClipboard() {

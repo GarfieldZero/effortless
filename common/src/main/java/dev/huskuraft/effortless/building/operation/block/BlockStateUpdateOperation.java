@@ -3,7 +3,6 @@ package dev.huskuraft.effortless.building.operation.block;
 import dev.huskuraft.effortless.api.core.BlockInteraction;
 import dev.huskuraft.effortless.api.core.BlockItem;
 import dev.huskuraft.effortless.api.core.BlockState;
-import dev.huskuraft.effortless.api.core.DiggerItem;
 import dev.huskuraft.effortless.api.core.InteractionHand;
 import dev.huskuraft.effortless.api.core.ItemStack;
 import dev.huskuraft.effortless.api.core.StatTypes;
@@ -22,6 +21,8 @@ import dev.huskuraft.effortless.building.session.Session;
 import java.util.Optional;
 
 public class BlockStateUpdateOperation extends BlockOperation {
+
+    private static final float BLOCK_BREAK_EXHAUSTION = 0.005F;
 
     public BlockStateUpdateOperation(
             Session session,
@@ -48,13 +49,18 @@ public class BlockStateUpdateOperation extends BlockOperation {
             getWorld().getBlockState(getBlockPosition()).getBlock().destroy(getWorld(), getPlayer(), getBlockPosition(), blockState);
         }
         if (getPlayer().getGameMode().isCreative()) {
-            return true;
+            return removed;
         }
+        if (!removed) {
+            return false;
+        }
+
         var properTool = !blockState.requiresCorrectToolForDrops() || itemInHand.getItem().isCorrectToolForDropsNoThrows(blockState);
         itemInHand.mineBlock(getWorld(), getPlayer(), getBlockPosition(), blockState);
-        if (removed && properTool) {
+        if (properTool) {
             blockState.getBlock().destroyEnd(getWorld(), getPlayer(), getBlockPosition(), blockState, blockEntity, itemInHandCopy);
         }
+        getPlayer().causeFoodExhaustion(BLOCK_BREAK_EXHAUSTION);
         return true;
     }
 
@@ -151,10 +157,7 @@ public class BlockStateUpdateOperation extends BlockOperation {
             var miningTool = (ItemStack) null;
 
             if (requireCorrectTool) {
-                miningTool = getStorage().contents().stream().filter(stack -> stack.getItem().isCorrectToolForDropsNoThrows(getBlockStateInWorld())).filter(tool -> !tool.isDamageableItem() || tool.getDurabilityLeft() > durabilityReserved).findFirst().orElse(null);
-                if (miningTool == null) {
-                    miningTool = getStorage().contents().stream().filter(tool -> tool.getItem() instanceof DiggerItem).filter(tool -> !tool.isDamageableItem() || tool.getDurabilityLeft() > durabilityReserved).findFirst().orElse(null);
-                }
+                miningTool = findMiningTool(durabilityReserved);
                 if (miningTool == null) {
                     return BlockOperationResultType.FAIL_BREAK_TOOL_INSUFFICIENT;
                 }
@@ -243,6 +246,28 @@ public class BlockStateUpdateOperation extends BlockOperation {
             }
         }
         return BlockOperationResultType.CONSUME;
+    }
+
+    private ItemStack findMiningTool(int durabilityReserved) {
+        var contents = getStorage().contents();
+        if (context.preferToolInHand()) {
+            var selectedSlot = getPlayer().getInventory().getSelected();
+            if (selectedSlot >= 0 && selectedSlot < contents.size()) {
+                var heldTool = contents.get(selectedSlot);
+                if (isUsableMiningTool(heldTool, durabilityReserved)) {
+                    return heldTool;
+                }
+            }
+        }
+        return contents.stream()
+                .filter(tool -> isUsableMiningTool(tool, durabilityReserved))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean isUsableMiningTool(ItemStack tool, int durabilityReserved) {
+        return tool.getItem().isCorrectToolForDropsNoThrows(getBlockStateInWorld())
+                && (!tool.isDamageableItem() || tool.getDurabilityLeft() > durabilityReserved);
     }
 
     @Override

@@ -1,28 +1,55 @@
 ![Logo](assets/logo.png)
 
-# Effortless Structure
+# Effortless Structure: Survival Edition
 
-[Effortless Structure]() is a multiplatform mod for placing and breaking blocks in Minecraft. It offers a set of modes
-allowing players to create structures and designs with ease. Additionally, it includes an randomizer that randomly
-selects items
-from a pre-defined list for random placement.
+> **Unofficial fork notice**
+>
+> This is an unofficial, survival-focused fork of Effortless Structure. It is
+> not affiliated with or endorsed by the upstream author. This fork keeps the
+> upstream `effortless` mod ID for compatibility with existing code and
+> configuration, so do not install it alongside the upstream mod.
 
 <div style="text-align: center">
-    <a href="https://modrinth.com/mod/effortless">Modrinth</a>
+    <a href="https://github.com/huskuraft/effortless">Upstream</a>
     <span> | </span>
-    <a href="https://www.curseforge.com/minecraft/mc-mods/effortless">CurseForge</a>
+    <a href="https://github.com/GarfieldZero/effortless">Fork Source</a>
     <span> | </span>
-    <a href="https://github.com/huskcasaca/effortless">GitHub</a>
+    <a href="https://github.com/GarfieldZero/effortless/releases">Fork Releases</a>
     <span> | </span>
-    <a href="https://github.com/huskcasaca/effortless/wiki">Documentation</a>
-    <span> | </span>
-    <a href="https://discord.gg/FwbBg8uUZ7">Discord</a>
+    <a href="https://github.com/GarfieldZero/effortless/issues">Fork Issues</a>
 </div>
 
 ## Downloads
 
-- [Modrinth](https://modrinth.com/mod/effortless)
-- [Curseforge](https://www.curseforge.com/minecraft/mc-mods/effortless)
+Builds for Minecraft 1.20.1 are available from
+[this fork's GitHub Releases](https://github.com/GarfieldZero/effortless/releases).
+This fork is not published through the upstream Modrinth or CurseForge pages.
+
+## Fork Status
+
+- Upstream project: `huskuraft/effortless`
+- Upstream base: `v3.4.0` (`c9ec60f1`)
+- Fork version: `3.4.0-survival.1`
+- Verified targets: Minecraft 1.20.1 with Fabric and Forge
+- License: GNU LGPL v3.0
+
+## Survival Edition Changes
+
+- Breaking or replacing blocks uses normal tool durability and applies vanilla
+  block-breaking hunger exhaustion.
+- **Use Proper Tools** defaults to enabled. A correct tool is required, and a
+  tool with an insufficient tier cannot break a harder block.
+- **Reserved Tool Durability** defaults to `1`, preventing automatic tool use
+  when only the reserved durability remains.
+- **Prefer Tool in Hand** defaults to enabled. The selected hotbar tool is used
+  first when it is valid, with inventory fallback.
+- **Gather Drops at Nearest Broken Block** defaults to enabled. It can be
+  disabled in the builder settings.
+- A configurable key binding, **Temporarily Disable Building (Hold)**, defaults
+  to Left Ctrl. Hold it to suspend building and block interaction, then release
+  it to resume.
+
+See [FORK_NOTICE.md](FORK_NOTICE.md) for attribution and modification details.
 
 ## Features
 
@@ -94,25 +121,13 @@ from a pre-defined list for random placement.
 
 - You need to install this mod on both the client side and server side.
 - You can use this mod on servers with different platforms from your client.
-- You can use [ViaFabric](https://github.com/ViaVersion/ViaFabric) and [ViaForge](https://github.com/ViaVersion/ViaForge) are also
-  supported and tested.
 - You can use the same mod jar file on multiple targets.
 
-| Filename                      | Targets                  | Fabric  |  Quilt  |  Forge  | NeoForge |
-|-------------------------------|--------------------------|:-------:|:-------:|:-------:|:--------:|
-| `effortless-1.21.3-3.2.0.jar` | `1.21.3` `1.21.2`        | &check; | &check; |         | &check;  |
-| `effortless-1.21.1-3.2.0.jar` | `1.21.1` `1.21`          | &check; | &check; | &check; | &check;  |
-| `effortless-1.20.6-3.2.0.jar` | `1.20.6` `1.20.5`        | &check; | &check; | &check; | &check;  |
-| `effortless-1.20.4-3.2.0.jar` | `1.20.4` `1.20.3`        | &check; | &check; | &check; |          |
-| `effortless-1.20.2-3.2.0.jar` | `1.20.2`                 | &check; | &check; | &check; |          |
-| `effortless-1.20.1-3.2.0.jar` | `1.20.1` `1.20`          | &check; | &check; | &check; |          |
-| `effortless-1.19.4-3.2.0.jar` | `1.19.4`                 | &check; | &check; | &check; |          |
-| `effortless-1.19.3-3.2.0.jar` | `1.19.3`                 | &check; | &check; | &check; |          |
-| `effortless-1.19.2-3.2.0.jar` | `1.19.2` `1.19.1` `1.19` | &check; | &check; | &check; |          |
-| `effortless-1.18.2-3.2.0.jar` | `1.18.2`                 | &check; | &check; | &check; |          |
-| `effortless-1.18.1-3.2.0.jar` | `1.18.1` `1.18`          | &check; | &check; | &check; |          |
-| `effortless-1.17.1-3.2.0.jar` | `1.17.1`                 | &check; | &check; | &check; |          |
-|                               | `1.17  `                 |         |         |         |          |
+| Filename                                  | Targets  | Fabric  | Forge   |
+|-------------------------------------------|----------|:-------:|:-------:|
+| `effortless-1.20.1-3.4.0-survival.1.jar`  | `1.20.1` | &check; | &check; |
+
+Quilt and NeoForge are not part of the verified target set for this fork.
 
 ## Dependencies
 
@@ -123,31 +138,25 @@ from a pre-defined list for random placement.
 | Fabric Loader | https://fabricmc.net/use/installer/                           |
 | Fabric API    | https://www.curseforge.com/minecraft/mc-mods/fabric-api/files |
 
-## Quilt
-
-| Dependency         | Download                              |
-|--------------------|---------------------------------------|
-| Quilt Loader       | https://quiltmc.org/install/          |
-| Quilted Fabric API | https://modrinth.com/mod/qsl/versions |
-
 ## Forge
 
 | Dependency   | Download                                                   |
 |--------------|------------------------------------------------------------|
 | Forge Loader | https://files.minecraftforge.net/net/minecraftforge/forge/ |
 
-## NeoForge
-
-| Dependency      | Download                                   |
-|-----------------|--------------------------------------------|
-| NeoForge Loader | https://neoforged.net/categories/releases/ |
-
 ## Credits
 
+* **[Huskcasaca](https://github.com/huskcasaca)** and the Effortless Structure
+  contributors, for the upstream project
 * **[Requioss](https://www.curseforge.com/members/requioss)**, the author
   of [Effortless Building](https://www.curseforge.com/minecraft/mc-mods/effortless-building)
 * **[loehnertj](https://github.com/loehnertj)**, for porting to 1.20.2
+* **[GarfieldZero](https://github.com/GarfieldZero)**, for the Survival Edition
+  fork changes
 
-## License
+## License and Attribution
 
-Effortless Structure is licensed under LGPLv3.
+This fork is distributed under GNU LGPL v3.0, the same license as the upstream
+project. The original `LICENSE` and copyright notices are retained. See
+[FORK_NOTICE.md](FORK_NOTICE.md) for the upstream source, base revision, and a
+summary of modifications.

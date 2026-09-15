@@ -177,6 +177,8 @@ public class ContextSerializer implements NetByteBufSerializer<Context> {
         public BuilderConfig read(NetByteBuf byteBuf) {
             return new BuilderConfig(
                     byteBuf.readVarInt(),
+                    byteBuf.readBoolean(),
+                    byteBuf.readBoolean(),
                     byteBuf.readBoolean()
             );
         }
@@ -185,6 +187,8 @@ public class ContextSerializer implements NetByteBufSerializer<Context> {
         public void write(NetByteBuf byteBuf, BuilderConfig builderConfig) {
             byteBuf.writeVarInt(builderConfig.reservedToolDurability());
             byteBuf.writeBoolean(builderConfig.passiveMode());
+            byteBuf.writeBoolean(builderConfig.gatherDrops());
+            byteBuf.writeBoolean(builderConfig.preferToolInHand());
         }
 
     }

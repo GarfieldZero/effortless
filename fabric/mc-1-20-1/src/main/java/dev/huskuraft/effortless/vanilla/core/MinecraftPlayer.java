@@ -153,4 +153,9 @@ public record MinecraftPlayer(net.minecraft.world.entity.player.Player refs) imp
         refs.resetStat(stat.reference());
     }
 
+    @Override
+    public void causeFoodExhaustion(float amount) {
+        refs.causeFoodExhaustion(amount);
+    }
+
 }
